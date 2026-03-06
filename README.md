@@ -114,5 +114,17 @@ The backend for Chacha is now maintained in its own repository. It handles:
 For backend setup, please refer to the dedicated [Chacha-backend](https://github.com/samwanyua/Chacha-backend) project.
 
 
+## 7. Contributing
+
+We welcome contributions! To maintain a clean and stable codebase, please follow these guidelines:
+
+1.  **Branching Strategy:** Do **not** push directly to the `main` branch. Always create a new branch for your feature or bug fix:
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+2.  **Pull Requests:** When your changes are ready, create a Pull Request (PR) targeting the **`dev`** branch, not `main`. 
+3.  **Review:** Once your PR is reviewed and approved, it will be merged into `dev` for further testing before reaching `main`.
+
+---
 
 Developed with ❤️ for children everywhere.
