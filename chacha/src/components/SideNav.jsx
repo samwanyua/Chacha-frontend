@@ -25,7 +25,7 @@ export default function SideNav({ current, onChange }) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         gap: 2,
         background: "rgba(255,255,255,0.72)",
         backdropFilter: "blur(14px)",

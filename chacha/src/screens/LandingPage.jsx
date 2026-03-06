@@ -29,17 +29,22 @@ export default function LandingPage({ onNavigate }) {
         <ChachaLogo height={52} />
 
         <Stack direction="row" spacing={4} alignItems="center">
-          {["HOW IT WORKS", "OUR MODULES", "FOR PARENTS"].map((label) => (
+          {["HOW IT WORKS"].map((label) => (
             <Typography
-              key={label}
+              onClick={() => onNavigate("how-it-works")}
               sx={{
-                fontFamily: "'Nunito', sans-serif", fontWeight: 800,
-                fontSize: "1rem", color: "#555", cursor: "pointer",
-                "&:hover": { color: "#1e88e5" }, transition: "color 0.2s",
+                fontFamily: "'Nunito', sans-serif",
+                fontWeight: 800,
+                fontSize: "1rem",
+                color: "#555",
+                cursor: "pointer",
+                "&:hover": { color: "#1e88e5" },
+                transition: "color 0.2s",
               }}
             >
-              {label}
+              HOW IT WORKS
             </Typography>
+
           ))}
           <Button
             variant="contained"
@@ -61,8 +66,15 @@ export default function LandingPage({ onNavigate }) {
       {/* ── Hero ── */}
       <Box
         sx={{
-          flex: 1, display: "flex", alignItems: "center",
-          px: { xs: 4, md: 10 }, py: 6, gap: 6,
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" }, // stack on mobile
+          alignItems: "center",
+          justifyContent: "center", // center vertically
+          px: { xs: 4, md: 10 },
+          py: { xs: 6, md: 0 },
+          gap: 6,
+          minHeight: "calc(100vh - 80px)", // full viewport minus navbar height
+          width: "100%",
         }}
       >
         {/* Mascot + rainbow bar */}
@@ -83,7 +95,7 @@ export default function LandingPage({ onNavigate }) {
         </Stack>
 
         {/* Content */}
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, textAlign: { xs: "center", md: "left" } }}>
           <Typography
             variant="h1"
             sx={{
@@ -109,7 +121,7 @@ export default function LandingPage({ onNavigate }) {
           </Typography>
 
           {/* Module cards */}
-          <Stack direction="row" spacing={3} flexWrap="wrap" sx={{ mb: 5 }}>
+          <Stack direction="row" spacing={3} flexWrap="wrap" justifyContent={{ xs: "center", md: "flex-start" }} sx={{ mb: 5 }}>
             {MODULE_CARDS.map((m) => (
               <Paper
                 key={m.id}
@@ -170,6 +182,7 @@ export default function LandingPage({ onNavigate }) {
           </Button>
         </Box>
       </Box>
+
     </Box>
   );
 }

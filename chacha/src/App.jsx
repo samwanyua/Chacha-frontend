@@ -7,12 +7,8 @@ import Module1             from "./screens/Module1";
 import Module2             from "./screens/Module2";
 import Module3             from "./screens/Module3";
 import ComingSoon          from "./components/ComingSoon";
+import HowItWorks          from "./screens/HowItWorks";
 
-/**
- * App
- * Root component — owns the navigation state.
- * No router library needed; screens are rendered conditionally.
- */
 export default function App() {
   const [screen, setScreen] = useState("landing");
 
@@ -22,14 +18,16 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      {screen === "landing"  && <LandingPage    onNavigate={navigate} />}
-      {screen === "modules"  && <ModuleSelector onNavigate={navigate} />}
-      {screen === "module1"  && <Module1        onNavigate={navigate} />}
-      {screen === "module2"  && <Module2        onNavigate={navigate} />}
-      {screen === "module3"  && <Module3        onNavigate={navigate} />}
-      {screen === "progress" && <ComingSoon title="Progress Tracker" onNavigate={navigate} />}
-      {screen === "alerts"   && <ComingSoon title="Notifications"    onNavigate={navigate} />}
-      {screen === "settings" && <ComingSoon title="Settings"         onNavigate={navigate} />}
+      {screen === "landing"       && <LandingPage onNavigate={navigate} />}
+      {screen === "how-it-works"  && <HowItWorks onNavigate={navigate} />} 
+      {screen === "modules"       && <ModuleSelector onNavigate={navigate} />}
+      {screen === "module1"       && <Module1 onNavigate={navigate} />}
+      {screen === "module2"       && <Module2 onNavigate={navigate} />}
+      {screen === "module3"       && <Module3 onNavigate={navigate} />}
+      {screen === "progress"      && <ComingSoon title="Progress Tracker" onNavigate={navigate} />}
+      {screen === "alerts"        && <ComingSoon title="Notifications" onNavigate={navigate} />}
+      {screen === "settings"      && <ComingSoon title="Settings" onNavigate={navigate} />}
+
     </ThemeProvider>
   );
 }
