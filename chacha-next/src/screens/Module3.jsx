@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Box, Button, Paper, Typography, Stack } from "@mui/material";
+import { Box, Button, Paper, Typography, Stack, IconButton, CircularProgress } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import ChameleonMascot  from "../components/ChameleonMascot";
 import StarBar          from "../components/StarBar";
 import FeedbackBadge    from "../components/FeedbackBadge";
@@ -9,13 +10,17 @@ import MicButton        from "../components/MicButton";
 import ChachaLogo       from "../components/ChachaLogo";
 import { BG_STYLE }     from "../constants/theme";
 import { MODULE3_SENTENCES, WORD_COLORS } from "../constants/data";
+import { useSpeech }     from "../hooks/useSpeech";
 
 export default function Module3({ onNavigate }) {
-  const [sentIdx,   setSentIdx]   = useState(0);
-  const [listening, setListening] = useState(false);
-  const [score,     setScore]     = useState(null);
-  const [stars,     setStars]     = useState(3);
+  const [sentIdx, setSentIdx] = useState(0);
+  const [score, setScore] = useState(null);
+  const [stars, setStars] = useState(3);
+  const [evaluating, setEvaluating] = useState(false);
+  const [transcription, setTranscription] = useState("");
   const timeoutRef = useRef(null);
+
+  const { isRecording, isPlaying, playTTS, startRecording, stopRecordingAndEvaluate } = useSpeech();
 
   useEffect(() => {
     return () => clearTimeout(timeoutRef.current);
@@ -23,22 +28,40 @@ export default function Module3({ onNavigate }) {
 
   const sent = MODULE3_SENTENCES[sentIdx];
 
-  const finishRecording = () => {
-    clearTimeout(timeoutRef.current);
-    const s = Math.floor(Math.random() * 35) + 65;
-    setScore(s);
-    setListening(false);
-    if (s >= 70) setStars((p) => Math.min(5, p + 1));
-  };
-
-  const handleMic = () => {
-    if (listening) {
-      finishRecording();
+  const handleMic = async () => {
+    if (isRecording) {
+      clearTimeout(timeoutRef.current);
+      setEvaluating(true);
+      try {
+        const result = await stopRecordingAndEvaluate(sent.sentence);
+        const s = result.evaluation?.accuracy || 0;
+        setTranscription(result.transcription || "");
+        setScore(s);
+        if (s >= 70) setStars((p) => Math.min(5, p + 1));
+      } catch (err) {
+        console.error(err);
+        setScore(0);
+      } finally {
+        setEvaluating(false);
+      }
     } else {
-      setListening(true);
+      startRecording();
       setScore(null);
-      timeoutRef.current = setTimeout(() => {
-        finishRecording();
+      setTranscription("");
+      timeoutRef.current = setTimeout(async () => {
+        setEvaluating(true);
+        try {
+          const result = await stopRecordingAndEvaluate(sent.sentence);
+          const s = result.evaluation?.accuracy || 0;
+          setTranscription(result.transcription || "");
+          setScore(s);
+          if (s >= 70) setStars((p) => Math.min(5, p + 1));
+        } catch (e) {
+          console.error(e);
+          setScore(0);
+        } finally {
+          setEvaluating(false);
+        }
       }, 60000); // 1 minute max
     }
   };
@@ -46,6 +69,7 @@ export default function Module3({ onNavigate }) {
   const handleNext = () => {
     setSentIdx((i) => (i + 1) % MODULE3_SENTENCES.length);
     setScore(null);
+    setTranscription("");
   };
 
   const words = sent.sentence.split(" ");
@@ -62,7 +86,7 @@ export default function Module3({ onNavigate }) {
 
       <Box
         sx={{
-          flex: 1, ml: "100px",
+          flex: 1, ml: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center", px: 3, py: 3,
         }}
@@ -163,12 +187,49 @@ export default function Module3({ onNavigate }) {
                   {w}
                 </Typography>
               ))}
+              <IconButton 
+                onClick={() => playTTS(sent.sentence)}
+                disabled={isPlaying}
+                sx={{ 
+                  color: '#444', 
+                  bgcolor: 'rgba(0,0,0,0.05)', 
+                  ml: 1,
+                  mt: 1 
+                }}
+              >
+                <PlayCircleFilledIcon sx={{ fontSize: "2.5rem" }} />
+              </IconButton>
             </Box>
+
+            {/* Transcription display for user feedback */}
+            {transcription && !isRecording && !evaluating && (
+              <Box sx={{ 
+                bgcolor: 'rgba(0,0,0,0.03)', 
+                borderRadius: 2, 
+                px: 2, 
+                py: 1,
+                mb: 1
+              }}>
+                <Typography sx={{ fontFamily: "var(--font-nunito)", fontSize: "1rem", color: "#666", textAlign: 'center' }}>
+                  You said: <br/>
+                  <strong style={{ color: '#444' }}>"{transcription}"</strong>
+                </Typography>
+              </Box>
+            )}
 
             <FeedbackBadge score={score} />
 
             <Stack spacing={2} alignItems="center" sx={{ width: "100%" }}>
-              <MicButton onClick={handleMic} listening={listening} size="lg" color="green" />
+              {evaluating ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={40} />
+                  <Typography sx={{ fontFamily: "var(--font-nunito)", fontWeight: 700, fontSize: "0.9rem", color: "#666" }}>
+                    Getting Score...
+                  </Typography>
+                </Box>
+              ) : (
+                <MicButton onClick={handleMic} listening={isRecording} size="lg" color={isRecording ? "red" : "green"} />
+              )}
 
               {score !== null && (
                 <Button

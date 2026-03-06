@@ -43,7 +43,7 @@ export default function ModuleSelector({ onNavigate }) {
       {/* Main content – offset by sidebar width */}
       <Box
         sx={{
-          flex: 1, ml: "100px",
+          flex: 1, ml: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
           p: 4,

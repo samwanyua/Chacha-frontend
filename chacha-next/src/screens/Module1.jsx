@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Box, Button, Paper, Typography, Stack } from "@mui/material";
+import { Box, Button, Paper, Typography, Stack, IconButton, CircularProgress } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import EmojiEventsIcon  from "@mui/icons-material/EmojiEvents";
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import ChameleonMascot  from "../components/ChameleonMascot";
 import StarBar          from "../components/StarBar";
 import ProgressDots     from "../components/ProgressDots";
@@ -10,36 +11,81 @@ import FeedbackBadge    from "../components/FeedbackBadge";
 import SideNav          from "../components/SideNav";
 import { BG_STYLE }     from "../constants/theme";
 import { MODULE1_WORDS } from "../constants/data";
+import { useSpeech }     from "../hooks/useSpeech";
 
 export default function Module1({ onNavigate }) {
-  const [wordIdx,   setWordIdx]   = useState(0);
-  const [listening, setListening] = useState(false);
-  const [score,     setScore]     = useState(null);
-  const [stars,     setStars]     = useState(6);
+  const [wordIdx, setWordIdx] = useState(0);
+  const [score, setScore] = useState(null);
+  const [evaluating, setEvaluating] = useState(false);
+  const [transcription, setTranscription] = useState("");
+  const [completed, setCompleted] = useState([]);
   const timeoutRef = useRef(null);
 
+  const { isRecording, isPlaying, playTTS, startRecording, stopRecordingAndEvaluate } = useSpeech();
+
+  const getUserId = () => {
+    try {
+      const u = JSON.parse(localStorage.getItem("chacha_user"));
+      return u?.user_id || u?.id || 1;
+    } catch { return 1; }
+  };
+
   useEffect(() => {
+    const uid = getUserId();
+    setCompleted(JSON.parse(localStorage.getItem(`chacha_mod1_${uid}`) || "[]"));
     return () => clearTimeout(timeoutRef.current);
   }, []);
 
-  const word = MODULE1_WORDS[wordIdx];
-
-  const finishRecording = () => {
-    clearTimeout(timeoutRef.current);
-    const s = Math.floor(Math.random() * 40) + 60;
-    setScore(s);
-    setListening(false);
-    if (s >= 60) setStars((p) => Math.min(12, p + 1));
+  const markCompleted = (text) => {
+    const uid = getUserId();
+    const saved = JSON.parse(localStorage.getItem(`chacha_mod1_${uid}`) || "[]");
+    if (!saved.includes(text)) {
+      const next = [...saved, text];
+      localStorage.setItem(`chacha_mod1_${uid}`, JSON.stringify(next));
+      setCompleted(next);
+    }
   };
 
-  const handleMic = () => {
-    if (listening) {
-      finishRecording();
+  const word = MODULE1_WORDS[wordIdx];
+  const stars = completed.length;
+
+  const handleScore = (s) => {
+    setScore(s);
+    if (s >= 60) markCompleted(word.word);
+  };
+
+  const handleMic = async () => {
+    if (isRecording) {
+      clearTimeout(timeoutRef.current);
+      setEvaluating(true);
+      try {
+        const result = await stopRecordingAndEvaluate(word.word);
+        const s = result.evaluation?.accuracy || 0;
+        setTranscription(result.transcription || "");
+        handleScore(s);
+      } catch (err) {
+        console.error(err);
+        setScore(0);
+      } finally {
+        setEvaluating(false);
+      }
     } else {
-      setListening(true);
+      startRecording();
       setScore(null);
-      timeoutRef.current = setTimeout(() => {
-        finishRecording();
+      setTranscription("");
+      timeoutRef.current = setTimeout(async () => {
+        setEvaluating(true);
+        try {
+          const result = await stopRecordingAndEvaluate(word.word);
+          const s = result.evaluation?.accuracy || 0;
+          setTranscription(result.transcription || "");
+          handleScore(s);
+        } catch (e) {
+          console.error(e);
+          setScore(0);
+        } finally {
+          setEvaluating(false);
+        }
       }, 60000); // 1 minute max
     }
   };
@@ -47,6 +93,7 @@ export default function Module1({ onNavigate }) {
   const handleNext = () => {
     setWordIdx((i) => (i + 1) % MODULE1_WORDS.length);
     setScore(null);
+    setTranscription("");
   };
 
   return (
@@ -62,7 +109,7 @@ export default function Module1({ onNavigate }) {
       {/* Main */}
       <Box
         sx={{
-          flex: 1, ml: "100px",
+          flex: 1, ml: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center",
           px: 3, py: 3,
@@ -95,10 +142,7 @@ export default function Module1({ onNavigate }) {
           </Stack>
         </Box>
 
-        {/* Floating mascot */}
-        <Box sx={{ position: "absolute", left: { xs: 10, md: 50 }, top: 50, zIndex: 10 }}>
-          <ChameleonMascot size={150} animation="wave" />
-        </Box>
+
 
         {/* ── Big central card ── */}
         <Paper
@@ -121,23 +165,62 @@ export default function Module1({ onNavigate }) {
             {word.emoji}
           </Box>
 
-          {/* Word */}
-          <Typography
-            sx={{
-              fontFamily: "var(--font-fredoka), 'Fredoka One', cursive",
-              fontSize: "clamp(3.5rem,9vw,5rem)",
-              color: word.color,
-              WebkitTextStroke: "2px rgba(0,0,0,0.1)",
-              textShadow: `4px 4px 0 ${word.color}33`,
-              letterSpacing: 3,
-            }}
-          >
-            {word.word}
-          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            {/* Word */}
+            <Typography
+              sx={{
+                fontFamily: "var(--font-fredoka), 'Fredoka One', cursive",
+                fontSize: "clamp(3.5rem,9vw,5rem)",
+                color: word.color,
+                WebkitTextStroke: "2px rgba(0,0,0,0.1)",
+                textShadow: `4px 4px 0 ${word.color}33`,
+                letterSpacing: 3,
+              }}
+            >
+              {word.word}
+            </Typography>
+
+            <IconButton 
+              onClick={() => playTTS(word.word)}
+              disabled={isPlaying}
+              sx={{ 
+                color: word.color, 
+                bgcolor: `${word.color}22`,
+                '&:hover': { bgcolor: `${word.color}44` }
+              }}
+            >
+              <PlayCircleFilledIcon sx={{ fontSize: "3rem" }} />
+            </IconButton>
+          </Stack>
+
+          {/* Display Transcription */}
+          {transcription && !isRecording && !evaluating && (
+            <Box sx={{ 
+              bgcolor: 'rgba(0,0,0,0.03)', 
+              borderRadius: 3, 
+              px: 3, 
+              py: 1.5,
+              mb: 1
+            }}>
+              <Typography sx={{ fontFamily: "var(--font-nunito)", fontSize: "1rem", color: "#666", textAlign: 'center' }}>
+                You said: <br/>
+                <strong style={{ color: '#444', fontSize: '1.2rem' }}>"{transcription}"</strong>
+              </Typography>
+            </Box>
+          )}
 
           <FeedbackBadge score={score} />
 
-          <MicButton onClick={handleMic} listening={listening} size="lg" />
+          {evaluating ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <CircularProgress size={50} sx={{ color: word.color }} />
+              <Typography sx={{ fontFamily: "var(--font-nunito)", fontWeight: 700, color: "#666" }}>
+                Checking Pronunciation...
+              </Typography>
+            </Box>
+          ) : (
+            <MicButton onClick={handleMic} listening={isRecording} size="lg" color={isRecording ? "error" : "primary"} />
+          )}
 
           {score !== null && (
             <Button

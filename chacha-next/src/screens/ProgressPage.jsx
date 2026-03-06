@@ -1,16 +1,12 @@
+import { useState, useEffect } from "react";
 import { Box, Paper, Typography, Stack, LinearProgress, Chip } from "@mui/material";
 import SideNav         from "../components/SideNav";
 import ChameleonMascot from "../components/ChameleonMascot";
 import StarBar         from "../components/StarBar";
 import { BG_STYLE }    from "../constants/theme";
+import { MODULE1_WORDS, MODULE2_PAIRS, MODULE3_SENTENCES } from "../constants/data";
 
-// ── Mock progress data (swap with real state/context later) ───────────────────
-const STATS = [
-  { emoji: "🗣️", value: 42,   label: "Words Practiced" },
-  { emoji: "🔥", value: 7,    label: "Day Streak"       },
-  { emoji: "⭐", value: 18,   label: "Stars Earned"     },
-  { emoji: "🏆", value: 3,    label: "Badges Won"       },
-];
+// ── Mock module progress & badges (to be dynamic next update) ───────────────────
 
 const MODULES = [
   {
@@ -19,9 +15,9 @@ const MODULES = [
     icon: "⭐", animal: "🐱",
     color: "#f9a825", bg: "linear-gradient(135deg,#ffe082,#ffca28)",
     border: "#f9a825",
-    progress: 75,        // percent
-    starsEarned: 4, starsTotal: 5,
-    wordsLeft: 2,
+    progress: 0,       
+    starsEarned: 0, starsTotal: MODULE1_WORDS.length,
+    wordsLeft: MODULE1_WORDS.length,
   },
   {
     id: "module2",
@@ -29,9 +25,9 @@ const MODULES = [
     icon: "🚀", animal: "🐶",
     color: "#1e88e5", bg: "linear-gradient(135deg,#90caf9,#42a5f5)",
     border: "#1e88e5",
-    progress: 50,
-    starsEarned: 3, starsTotal: 6,
-    wordsLeft: 3,
+    progress: 0,
+    starsEarned: 0, starsTotal: MODULE2_PAIRS.length,
+    wordsLeft: MODULE2_PAIRS.length,
   },
   {
     id: "module3",
@@ -39,9 +35,9 @@ const MODULES = [
     icon: "🌍", animal: "🐒",
     color: "#43a047", bg: "linear-gradient(135deg,#a5d6a7,#66bb6a)",
     border: "#43a047",
-    progress: 20,
-    starsEarned: 1, starsTotal: 5,
-    wordsLeft: 4,
+    progress: 0,
+    starsEarned: 0, starsTotal: MODULE3_SENTENCES.length,
+    wordsLeft: MODULE3_SENTENCES.length,
   },
 ];
 
@@ -234,6 +230,39 @@ function BadgeCard({ emoji, label, unlocked }) {
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function ProgressPage({ onNavigate }) {
+  const [dynamicStats, setDynamicStats] = useState([
+    { emoji: "🗣️", value: 0, label: "Total Attempts" },
+    { emoji: "🎯", value: "0%", label: "Avg. Accuracy" },
+    { emoji: "🌟", value: 0, label: "Excellent 🥇" },
+    { emoji: "📈", value: 0, label: "Good 🏅" },
+  ]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const userRaw = localStorage.getItem("chacha_user");
+        if (!userRaw) return;
+        const user = JSON.parse(userRaw);
+        const userId = user.user_id || user.id || 1;
+        
+        const res = await fetch(`http://localhost:8000/api/users/${userId}/stats`);
+        const data = await res.json();
+        
+        if (data.stats) {
+          setDynamicStats([
+            { emoji: "🗣️", value: data.stats.total_sessions || 0, label: "Total Attempts" },
+            { emoji: "🎯", value: `${data.stats.average_score || 0}%`, label: "Avg. Accuracy" },
+            { emoji: "🌟", value: data.stats.excellent || 0, label: "Excellent 🥇" },
+            { emoji: "📈", value: data.stats.good || 0, label: "Good 🏅" },
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to load progress stats:", err);
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <Box sx={{ ...BG_STYLE, display: "flex" }}>
       <SideNav
@@ -248,7 +277,7 @@ export default function ProgressPage({ onNavigate }) {
       <Box
         sx={{
           flex: 1,
-          ml: "100px",
+          ml: 0,
           overflowY: "auto",
           px: { xs: 3, md: 5 },
           py: 4,
@@ -285,7 +314,7 @@ export default function ProgressPage({ onNavigate }) {
 
         {/* ── Stats row ── */}
         <Stack direction="row" spacing={3} flexWrap="wrap" sx={{ mb: 5 }}>
-          {STATS.map((s) => (
+          {dynamicStats.map((s) => (
             <StatCard key={s.label} {...s} />
           ))}
         </Stack>

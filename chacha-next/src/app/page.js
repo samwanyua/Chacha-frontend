@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LandingPage    from "@/screens/LandingPage";
+import AuthPage       from "@/screens/AuthPage";
 import ModuleSelector from "@/screens/ModuleSelector";
 import Module1        from "@/screens/Module1";
 import Module2        from "@/screens/Module2";
@@ -12,11 +13,27 @@ import HowItWorks     from "@/screens/HowItWorks";
 
 export default function Home() {
   const [screen, setScreen] = useState("landing");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const user = localStorage.getItem("chacha_user");
+    if (!user) {
+      setScreen("auth");
+    }
+  }, []);
 
   const navigate = (id) => setScreen(id);
 
+  const handleLoginSuccess = () => {
+    setScreen("landing");
+  };
+
+  if (!mounted) return null; // Avoid hydration flicker
+
   return (
     <>
+      {screen === "auth"         && <AuthPage       onNavigate={navigate} onLoginSuccess={handleLoginSuccess} />}
       {screen === "landing"      && <LandingPage    onNavigate={navigate} />}
       {screen === "how-it-works" && <HowItWorks     onNavigate={navigate} />}
       {screen === "modules"      && <ModuleSelector onNavigate={navigate} />}
