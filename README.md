@@ -113,11 +113,6 @@ The backend for Chacha is now maintained in its own repository. It handles:
 
 For backend setup, please refer to the dedicated [Chacha-backend](https://github.com/samwanyua/Chacha-backend) project.
 
-## 7. Future Roadmap
-- [ ] Multilingual support for diverse regions.
-- [ ] Real-time Therapist-Parent video sync.
-- [ ] AI-generated custom story modules based on weak phonemes.
 
----
 
 Developed with ❤️ for children everywhere.
