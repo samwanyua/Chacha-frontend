@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Box, Button, Typography, TextField, Paper, Stack, IconButton, Fade } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { InputAdornment } from "@mui/material";
 import ChachaLogo from "../components/ChachaLogo";
 import ChameleonMascot from "../components/ChameleonMascot";
 import { BG_STYLE } from "../constants/theme";
@@ -11,6 +14,9 @@ export default function AuthPage({ onNavigate, onLoginSuccess }) {
   const [view, setView] = useState("choice"); // 'choice', 'login', 'signup', 'forgot'
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,6 +42,10 @@ export default function AuthPage({ onNavigate, onLoginSuccess }) {
   };
 
   const handleSignup = async () => {
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match!");
+      return;
+    }
     setLoading(true);
     setErrorMsg("");
     try {
@@ -91,20 +101,51 @@ export default function AuthPage({ onNavigate, onLoginSuccess }) {
       <Paper
         elevation={6}
         sx={{
-          p: 5,
+          p: 6,
           borderRadius: 8,
-          maxWidth: 420,
+          maxWidth: 520,
           width: "100%",
           textAlign: "center",
           position: "relative",
           overflow: "visible",
-          bgcolor: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(10px)",
-          border: "4px solid white"
+          bgcolor: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(12px)",
+          border: "4px solid white",
+          transition: "all 0.3s ease-in-out"
         }}
       >
+        {/* Peeking Mascot for Kids on large screens */}
+        <Box sx={{ 
+          position: "absolute", 
+          left: -120, 
+          bottom: 100, 
+          display: { xs: "none", md: "block" },
+          transform: "scaleX(-1)" // Flip horizontally
+        }}>
+          <ChameleonMascot size={120} animation="peek" />
+        </Box>
+
+        {/* Floating Mascot for Kids on large screens */}
+        <Box sx={{ 
+          position: "absolute", 
+          right: -130, 
+          bottom: 20, 
+          display: { xs: "none", md: "block" } 
+        }}>
+          <ChameleonMascot size={160} animation="wave" />
+          <Typography sx={{ 
+            fontFamily: "var(--font-fredoka), 'Fredoka One', cursive", 
+            color: "#43a047", 
+            fontSize: "1.1rem",
+            transform: "rotate(10deg)",
+            mt: -2
+          }}>
+            Hii! 🦎
+          </Typography>
+        </Box>
+
         <Box sx={{ position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)" }}>
-          <ChameleonMascot size={120} animation="float" />
+          <ChameleonMascot size={140} animation="float" />
         </Box>
 
         <Box sx={{ mt: 5 }}>
@@ -159,17 +200,55 @@ export default function AuthPage({ onNavigate, onLoginSuccess }) {
                 />
                 
                 <TextField 
-                  fullWidth label="Password" type="password" variant="outlined" 
+                  fullWidth label="Password" 
+                  type={showPassword ? "text" : "password"} 
+                  variant="outlined" 
                   value={password} onChange={(e) => setPassword(e.target.value)}
                   sx={{ bgcolor: "white", borderRadius: 2 }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          onMouseDown={(e) => e.preventDefault()}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
+
+                {view === "signup" && (
+                  <TextField 
+                    fullWidth label="Confirm Password" 
+                    type={showConfirmPassword ? "text" : "password"} 
+                    variant="outlined" 
+                    value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                    sx={{ bgcolor: "white", borderRadius: 2 }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            edge="end"
+                          >
+                            {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
 
                 {errorMsg && <Typography color="error" sx={{ fontWeight: "bold", fontSize: "0.9rem" }}>{errorMsg}</Typography>}
 
                 <Button 
                   fullWidth variant="contained" 
                   onClick={view === "login" ? handleLogin : handleSignup}
-                  disabled={loading || !username || !password}
+                  disabled={loading || !username || !password || (view === "signup" && !confirmPassword)}
                   sx={{ background: view === "login" ? "linear-gradient(135deg,#74b9ff,#0984e3)" : "linear-gradient(135deg,#a5d6a7,#43a047)", fontSize: "1.2rem", py: 1.5, borderRadius: 4, fontFamily: "var(--font-fredoka), 'Fredoka One', cursive" }}
                 >
                   {loading ? "Please wait..." : (view === "login" ? "Log In" : "Sign Up")}
