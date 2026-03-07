@@ -320,70 +320,87 @@ export default function ProgressPage({ onNavigate }) {
         </Stack>
 
         {/* ── Overall star level ── */}
-        <Paper
-          elevation={3}
-          sx={{
-            borderRadius: 7,
-            p: 4, mb: 5,
-            background: "linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,255,255,0.8))",
-            backdropFilter: "blur(12px)",
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
-          <Box sx={{ textAlign: "center", flexShrink: 0 }}>
-            <Typography sx={{ fontSize: "5rem", lineHeight: 1 }}>🏆</Typography>
-            <Typography
-              sx={{
-                fontFamily: "var(--font-fredoka), 'Fredoka One', cursive",
-                fontSize: "1.4rem",
-                color: "#f9a825",
-                mt: 0.5,
-              }}
-            >
-              Level 3
-            </Typography>
-          </Box>
+        {(() => {
+          // Dynamic Level Calculation
+          const excellentCount = dynamicStats.find(s => s.label.includes("Excellent"))?.value || 0;
+          const goodCount = dynamicStats.find(s => s.label.includes("Good"))?.value || 0;
+          
+          const totalStars = (excellentCount * 3) + (goodCount * 1);
+          const starsPerLevel = 20;
+          const currentLevel = Math.floor(totalStars / starsPerLevel) + 1;
+          const starsIntoLevel = totalStars % starsPerLevel;
+          const progressPercent = (starsIntoLevel / starsPerLevel) * 100;
+          const starsToNext = starsPerLevel - starsIntoLevel;
 
-          <Box sx={{ flex: 1, width: "100%" }}>
-            <Typography
+          return (
+            <Paper
+              elevation={3}
               sx={{
-                fontFamily: "var(--font-fredoka), 'Fredoka One', cursive",
-                fontSize: "1.8rem",
-                color: "#333",
-                mb: 1,
+                borderRadius: 7,
+                p: 4, mb: 5,
+                background: "linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,255,255,0.8))",
+                backdropFilter: "blur(12px)",
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: "center",
+                gap: 4,
               }}
             >
-              Overall Progress
-            </Typography>
-            <StarBar filled={18} total={30} size="2rem" />
-            <Box sx={{ mt: 2 }}>
-              <LinearProgress
-                variant="determinate"
-                value={60}
-                sx={{
-                  height: 22, borderRadius: 10,
-                  backgroundColor: "#eee",
-                  "& .MuiLinearProgress-bar": {
-                    background: "linear-gradient(to right,#ff6b6b,#feca57,#48dbfb)",
-                    borderRadius: 10,
-                  },
-                }}
-              />
-            </Box>
-            <Typography
-              sx={{
-                fontFamily: "var(--font-nunito), 'Nunito', sans-serif",
-                fontWeight: 800, fontSize: "1rem",
-                color: "#888", mt: 1,
-              }}
-            >
-              18 / 30 stars — 12 more to reach Level 4! 🚀
-            </Typography>
-          </Box>
-        </Paper>
+              <Box sx={{ textAlign: "center", flexShrink: 0 }}>
+                <Typography sx={{ fontSize: "5rem", lineHeight: 1 }}>
+                  {currentLevel >= 5 ? "👑" : currentLevel >= 3 ? "🏆" : "⭐"}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "var(--font-fredoka), 'Fredoka One', cursive",
+                    fontSize: "1.4rem",
+                    color: "#f9a825",
+                    mt: 0.5,
+                  }}
+                >
+                  Level {currentLevel}
+                </Typography>
+              </Box>
+
+              <Box sx={{ flex: 1, width: "100%" }}>
+                <Typography
+                  sx={{
+                    fontFamily: "var(--font-fredoka), 'Fredoka One', cursive",
+                    fontSize: "1.8rem",
+                    color: "#333",
+                    mb: 1,
+                  }}
+                >
+                  Overall Progress
+                </Typography>
+                <StarBar filled={starsIntoLevel} total={starsPerLevel} size="2rem" />
+                <Box sx={{ mt: 2 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={progressPercent}
+                    sx={{
+                      height: 22, borderRadius: 10,
+                      backgroundColor: "#eee",
+                      "& .MuiLinearProgress-bar": {
+                        background: "linear-gradient(to right,#ff6b6b,#feca57,#48dbfb)",
+                        borderRadius: 10,
+                      },
+                    }}
+                  />
+                </Box>
+                <Typography
+                  sx={{
+                    fontFamily: "var(--font-nunito), 'Nunito', sans-serif",
+                    fontWeight: 800, fontSize: "1rem",
+                    color: "#888", mt: 1,
+                  }}
+                >
+                  {starsIntoLevel} / {starsPerLevel} stars — {starsToNext} more to reach Level {currentLevel + 1}! 🚀
+                </Typography>
+              </Box>
+            </Paper>
+          );
+        })()}
 
         {/* ── Module progress cards ── */}
         <Typography

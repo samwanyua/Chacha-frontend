@@ -24,8 +24,14 @@ body { font-family: 'Nunito', sans-serif; }
   50%       { box-shadow: 0 0 0 14px rgba(255,107,107,0); }
 }
 
+@keyframes peek {
+  0%, 100% { transform: translateX(0); }
+  50%       { transform: translateX(15px); }
+}
+
 .float     { animation: float     3s   ease-in-out infinite; }
 .wave      { animation: wave      2s   ease-in-out infinite; }
 .pop-in    { animation: popIn     0.35s ease forwards; }
 .celebrate { animation: celebrate 0.5s  ease forwards; }
 .pulse     { animation: pulse     1.2s  ease infinite; }
+.peek      { animation: peek      4s   ease-in-out infinite; }
